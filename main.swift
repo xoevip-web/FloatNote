@@ -391,6 +391,20 @@ final class NoteController: NSObject, NSTextViewDelegate, NSWindowDelegate {
         }
     }
 
+    // Hide the whole panel (circle or note) and bring it back, e.g. while gaming. The menu bar icon stays.
+    func setHidden(_ hidden: Bool) {
+        if hidden {
+            panel.orderOut(nil)
+            return
+        }
+        panel.orderFrontRegardless()
+        if expanded {
+            NSApp.activate(ignoringOtherApps: true)
+            panel.makeKeyAndOrderFront(nil)
+            panel.makeFirstResponder(textView)
+        }
+    }
+
     func applyState(animated: Bool) {
         applying = true
         defer { applying = false }
@@ -675,11 +689,15 @@ final class NoteController: NSObject, NSTextViewDelegate, NSWindowDelegate {
 
 // MARK: - App
 
-final class AppDelegate: NSObject, NSApplicationDelegate {
+final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     let note = NoteController()
+    var statusItem: NSStatusItem!
+    var statusVisibilityItem: NSMenuItem!
+    var statusLoginItem: NSMenuItem!
 
     func applicationDidFinishLaunching(_ n: Notification) {
         setupMainMenu()
+        setupStatusItem()
         note.menuProvider = { [weak self] in self?.makeContextMenu() }
         enableAutostartOnFirstRun()
         note.panel.orderFrontRegardless()
@@ -687,6 +705,38 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             NSApp.activate(ignoringOtherApps: true)
             note.panel.makeKey()
         }
+    }
+
+    // Hide / show the notes. Also reachable from the menu bar, which is the only way back while hidden.
+    @objc func toggleVisibility() {
+        note.setHidden(note.panel.isVisible)
+    }
+
+    // MARK: Menu bar icon
+
+    func setupStatusItem() {
+        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+        let icon = NSImage(systemSymbolName: "note.text", accessibilityDescription: "FloatNote")
+        icon?.isTemplate = true   // follows the menu bar's light/dark appearance
+        statusItem.button?.image = icon
+        statusItem.button?.toolTip = "FloatNote"
+
+        let menu = NSMenu()
+        menu.delegate = self
+        statusVisibilityItem = menu.addItem(withTitle: "Hide Notes", action: #selector(toggleVisibility), keyEquivalent: "")
+        statusVisibilityItem.target = self
+        menu.addItem(.separator())
+        statusLoginItem = menu.addItem(withTitle: "Launch at Login", action: #selector(toggleAutostart), keyEquivalent: "")
+        statusLoginItem.target = self
+        menu.addItem(.separator())
+        menu.addItem(withTitle: "Quit", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "")
+        statusItem.menu = menu
+    }
+
+    // Refresh the titles and checkmarks each time the menu bar menu opens
+    func menuNeedsUpdate(_ menu: NSMenu) {
+        statusVisibilityItem.title = note.panel.isVisible ? "Hide Notes" : "Show Notes"
+        statusLoginItem.state = autostartOn ? .on : .off
     }
 
     // MARK: Launch at login (SMAppService; enabled on first run, afterwards the menu checkmark rules)
@@ -721,6 +771,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     // Pops up on right-click of the circle / header
     func makeContextMenu() -> NSMenu {
         let menu = NSMenu()
+        let hide = menu.addItem(withTitle: "Hide Notes", action: #selector(toggleVisibility), keyEquivalent: "")
+        hide.target = self
+        menu.addItem(.separator())
         let login = menu.addItem(withTitle: "Launch at Login", action: #selector(toggleAutostart), keyEquivalent: "")
         login.target = self
         login.state = autostartOn ? .on : .off

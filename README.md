@@ -9,7 +9,7 @@
 - **One click, no window juggling.** A floating circle stays above every app. Click to expand, `Esc` or the chevron to collapse.
 - **Multiple notes with side tabs.** Up to 8 notes. Each tab shows the first letter of its note.
 - **Built for quick capture.** Copy, cut-and-clear (with undo), delete and new-note buttons live in the header.
-- **Stays out of your way.** No Dock icon, no menu bar icon. It remembers where you put it and never opens off-screen.
+- **Stays out of your way.** No Dock icon. A small menu bar icon lets you hide and show it. It remembers where you put it and never opens off-screen.
 - **Your data stays yours.** Notes are plain JSON in `~/Library/Application Support/FloatNote/`. No account, no network, no telemetry.
 - **Tiny and dependency-free.** One Swift file (under 800 lines, AppKit only), built with `swiftc`. No Xcode project needed.
 
@@ -45,7 +45,8 @@ Optionally drag `FloatNote.app` to `/Applications`. On first launch it registers
 | Click a side tab / `+` | Switch note / create a note |
 | Right-click a side tab | Delete that note |
 | Header buttons | New, delete, undo, cut (copy + clear), copy |
-| Right-click the circle or the header | Launch at Login, Quit |
+| Right-click the circle or the header | Hide Notes, Launch at Login, Quit |
+| Click the menu bar icon | Hide / show the notes, Launch at Login, Quit |
 | `⌘Q` while editing | Quit |
 
 Deleting a note that has content asks for confirmation. Undo steps back the last edit of the current note, including a cut.
